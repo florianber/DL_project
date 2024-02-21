@@ -1,9 +1,10 @@
 from imports import *
 from datamodule import *
+from init import labels_to_int ,int_to_labels
 
 # For converting XML annotations to YOLO format for a single image
 
-def convert_xml_to_YOLOformat(source, destination):
+def convert_xml_to_YOLOformat(source, destination,labels_to_int):
     """
     Converts XML annotations to YOLO format for a single image.
 
@@ -43,9 +44,11 @@ def convert_xml_to_YOLOformat(source, destination):
 
             # Format the line based on tree type and damage
             if tree_type == "Other":
-                line = f"{tree_type} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n"
+                label = labels_to_int[tree_type]
+                line = f"{label} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n"
             else:
-                line = f"{tree_type}-{damage} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n"
+                label = labels_to_int[f"{tree_type}-{damage}"]
+                line = f"{label} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n"
             txtfile.write(line)
 
     print(f"TXT file '{txt_filename}' has been created.")
@@ -82,8 +85,6 @@ def clean_and_preprocess_data(source, train_dir, test_dir, val_dir, split_ratio=
             continue
 
         gathered_list = gather_image_annotation(annotation_files, image_files)
-        print(gathered_list)
-
         shuffled_list = random.sample(gathered_list, len(gathered_list))
         train_split, test_split = split_spot(gathered_list=gathered_list, split_ratio=split_ratio)
 
@@ -96,8 +97,7 @@ def clean_and_preprocess_data(source, train_dir, test_dir, val_dir, split_ratio=
                 dest_path = (
                     train_dir if i < train_split else test_dir if i < test_split else val_dir
                 )
-                print(dest_path)
-                convert_xml_to_YOLOformat(src_path_annotation, f"{dest_path}/{labels_dir}/{root}{text_extension}")
+                convert_xml_to_YOLOformat(source=src_path_annotation, destination=f"{dest_path}/{labels_dir}/{root}{text_extension}",labels_to_int=labels_to_int)
                 shutil.copy(src_path_image, f"{dest_path}/{images_dir}")
             except Exception as e:
                 print(f"Error {e}")
