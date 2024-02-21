@@ -27,9 +27,23 @@ Larch_Dataset
 └── Nordkap_20190819 
 ```
 
-From this you can preprocess the data, running `preprocessing.py`. This should create a `Data/` folder et divide the data into 3 parts : **Train**, **Test**, **Validation**. In the same time this script changes the format of the label (or annotation) files from xml to text file but with the YOLO format. You can refer to this [link](https://docs.ultralytics.com/yolov5/tutorials/train_custom_data/#21-create-datasetyaml) to know more about the YOLO format
+From this point on, you can preprocess the data by running preprocessing.py. This script will create a `Data/` folder and divide the data into three parts: **Train**, **Test**, and **Validation**. Simultaneously, the script transforms the label files from XML to text files using the YOLO format. For more information about the YOLO format, refer to this [link](https://docs.ultralytics.com/yolov5/tutorials/train_custom_data/#21-create-datasetyaml).
+
+Upon completing this step, you should still have your original `Larch_Dataset/` alongside the newly created `Data/`. If desired, you can remove the `Larch_Dataset/` directory to free up space. Your `Data/` directory should have the following structure:
 
 
+```
+Data
+├── test
+│   ├── images
+│   └── labels
+├── train
+│   ├── images
+│   └── labels
+└── valid
+    ├── images
+    └── labels
+```
 ### Annotations
 For the annotated subset:
 - **Bounding Box Annotations:** Present for all images.
