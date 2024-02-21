@@ -7,3 +7,4 @@ import xml.etree.ElementTree as ET
 import shutil
 import random
 import tqdm
+from PIL import Image

@@ -1,0 +1,4 @@
+train: ../Data/train/images
+val: ../Data/valid/images
+nc: 4
+names: ['Larch-H', 'Larch-LD', 'Larch-HD', 'Other']

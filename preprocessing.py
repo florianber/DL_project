@@ -53,6 +53,37 @@ def convert_xml_to_YOLOformat(source, destination,labels_to_int):
 
     print(f"TXT file '{txt_filename}' has been created.")
 
+def resize_image(source,destination,new_size=(640,640)):
+    """
+    Resize an image and save the resized image to the destination directory.
+
+    Parameters:
+    - source (str): Path to the source image file.
+    - destination (str): Path to the destination directory.
+    - new_size (tuple): Tuple specifying the new size (width, height) for the resized image.
+
+    Returns:
+    None
+    """
+
+    filename =source.split("/")[-1]
+    try:
+        # Open the image file
+        image_path = source
+        img = Image.open(image_path)
+
+        # Resize the image
+        resized_img = img.resize(new_size)
+
+        # Save the resized image to the destination directory
+        destination_path = f"{destination}/{filename}"
+        resized_img.save(destination_path)
+
+        print(f"Resized {filename} successfully.")
+    except Exception as e:
+        print(f"Error processing {filename}: {e}")
+
+
 def clean_and_preprocess_data(source, train_dir, test_dir, val_dir, split_ratio=(0.8, 0.1, 0.1)):
     """
     Cleans and preprocesses data by splitting them into training, testing, and validation sets.
@@ -93,12 +124,11 @@ def clean_and_preprocess_data(source, train_dir, test_dir, val_dir, split_ratio=
             try:
                 root = anot_imag[0].split(".")[0]
                 src_path_annotation, src_path_image = create_src_path(anot_imag, annotation_path, image_path)
-                print(src_path_annotation)
                 dest_path = (
                     train_dir if i < train_split else test_dir if i < test_split else val_dir
                 )
                 convert_xml_to_YOLOformat(source=src_path_annotation, destination=f"{dest_path}/{labels_dir}/{root}{text_extension}",labels_to_int=labels_to_int)
-                shutil.copy(src_path_image, f"{dest_path}/{images_dir}")
+                resize_image(source=src_path_image,destination=f"{dest_path}/{images_dir}")
             except Exception as e:
                 print(f"Error {e}")
 
