@@ -2,7 +2,8 @@ import cv2
 import xml.etree.ElementTree as ET
 
 # Load XML annotation
-FILE = "B01_0030"
+
+FILE = "B01_0007"
 xml_file = f"Larch_Dataset/Bebehojd_20190527/Annotations/{FILE}.xml"
 tree = ET.parse(xml_file)
 root = tree.getroot()
