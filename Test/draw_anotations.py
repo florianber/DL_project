@@ -1,60 +1,83 @@
 import cv2
 import xml.etree.ElementTree as ET
+from imports import *
+from init import *
 
-# Load XML annotation
-
-FILE = "B01_0007"
-xml_file = f"Larch_Dataset/Bebehojd_20190527/Annotations/{FILE}.xml"
-tree = ET.parse(xml_file)
-root = tree.getroot()
-
-# Load image
-image_path = f"Larch_Dataset/Bebehojd_20190527/Images/{FILE}.JPG"
-image = cv2.imread(image_path)
-
-for obj in root.findall("object"):
-    tree_type = obj.find("tree").text
-    damage = obj.find("damage").text
-    bbox = obj.find("bndbox")
+def load_annotation_from_text(filename):
     
-    xmin = int(bbox.find("xmin").text)
-    ymin = int(bbox.find("ymin").text)
-    xmax = int(bbox.find("xmax").text)
-    ymax = int(bbox.find("ymax").text)
+    
+    with open(filename, 'r') as file:
+        lines = file.readlines()
 
-    # Define color based on tree type and damage
-    if tree_type == 'Larch':
-        if damage == 'H':
-            rect_color = (0, 255, 0)  # Green for Healthy (overrides tree type color)
-            text_color = (0, 0, 0)  # Black text
-        elif damage == 'LD':
-            rect_color = (0, 255, 255)  # Darker Red for High Damage
-            text_color = (0, 0, 0)  # Black text
-        else:
-            rect_color = (0, 0, 255)  # Darker Red for High Damage
-            text_color = (0, 0, 0)  # Black text
-    else:
-        rect_color = (255, 0, 255)  # Red for other tree types
-        text_color = (0, 0, 0)  # Black text
+    annotations = []
+    for line in lines:
+        data = line.strip().split()
+        tree_type = int(data[0])
+        center_x, center_y, width, height = map(float, data[1:])
+        annotations.append((tree_type, center_x, center_y, width, height))
 
-    # Draw bounding box on the image with color based on tree type and damage
+    return annotations
+
+def load_image(filename):
+    
+    image = cv2.imread(filename)
+    return image
+
+
+def define_colors(tree_type):
+    if tree_type == 0:
+        return (255, 0, 255), (0, 0, 0)  # Red for other tree types
+    elif tree_type == 1:
+        return (0, 255, 0), (0, 0, 0)  # Green for Healthy (overrides tree type color)
+    elif tree_type == 2:
+        return (0, 255, 255), (0, 0, 0)  # Darker Red for High Damage
+    elif tree_type == 3:
+        return (0, 0, 255), (0, 0, 0)  # Darker Red for High Damage
+
+def draw_bbox(image, bbox, rect_color, text_color, text):
+    center_x, center_y, width, height = bbox
+
+    # Calculate top-left and bottom-right coordinates from center, width, and height
+    image_original_size = 640
+    xmin = int((center_x - width / 2)*image_original_size)
+    ymin = int((center_y - height / 2)*image_original_size)
+    xmax = int((center_x + width / 2)*image_original_size)
+    ymax = int((center_y + height / 2)*image_original_size)
+
+
     cv2.rectangle(image, (xmin, ymin), (xmax, ymax), rect_color, 2)
-    
-    # Get the text to display
-    if tree_type == "Other":
-        text = tree_type
-    else:
-        text = f"{tree_type} - {damage}"
-    
+
     # Get the size of the text
     (text_width, text_height), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
-    
-    # Draw a filled rectangle as background for text
+    print(f"Text Position: ({xmin}, {ymin - text_height - 5}) to ({xmin + text_width}, {ymin})")
+
+    # Draw a filled rectangle as a background for text
     cv2.rectangle(image, (xmin, ymin - text_height - 5), (xmin + text_width, ymin), rect_color, -1)
 
-    # Display tree type and damage information with the same color
+    # Display tree type information with the same color
     cv2.putText(image, text, (xmin, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 2)
+    
 
-# Save the annotated image
-annotated_image_path = "Test/annotated_photo1.jpg"  # Replace with your desired path
-cv2.imwrite(annotated_image_path, image)
+    return image
+
+
+def annotate_image_from_text(annotation_file, image_file, image_annotated_file,int_to_labels):
+    annotations = load_annotation_from_text(annotation_file)
+    image = load_image(image_file)
+
+    for annotation in annotations:
+        tree_type, center_x, center_y, width, height = annotation
+        rect_color, text_color = define_colors(tree_type)
+        text = int_to_labels[tree_type]
+        draw_bbox(image, annotation[1:], rect_color, text_color, text)
+
+    # Save the annotated image
+    cv2.imwrite(image_annotated_file, image)
+
+
+folder_name = "Data/train/"
+image_file = folder_name + "images/B02_0051270.JPG"
+label_file = folder_name + "labels/B02_0051270.txt"
+image_annotated_file = "Test/B02_0051270_annoatated.JPG"
+
+annotate_image_from_text(label_file,image_file,image_annotated_file,int_to_labels)
