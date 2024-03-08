@@ -1,6 +1,7 @@
 import os
 from imports import *
 from init import *
+from datamodule import create_directory
 
 def read_text_file(file_path, labels_folder):
     with open(labels_folder + file_path, 'r') as file:
@@ -23,7 +24,6 @@ def calculate_tree_stats(filename, labels_folder, int_to_labels, labels_to_int):
 
         # Calculate proportions
         proportions = {label: count / trees_sum for label, count in trees_amount.items()}
-        print(trees_amount, proportions)
         return trees_amount, proportions
     else:
         for key,value in labels_to_int.items():
@@ -49,8 +49,7 @@ def get_proportions_per_image(labels_folder, int_to_labels, labels_to_int):
     file_names = os.listdir(labels_folder)
 
     for file_name in file_names:
-        print(file_name)
-        
+              
         count_file,proportions_file = calculate_tree_stats(file_name, labels_folder, int_to_labels, labels_to_int)
 
         # Add the proportions of this file to the list
@@ -80,32 +79,14 @@ def plot_stat(folder_name, int_to_labels, labels_to_int):
     # Show the plot
     plt.show()
 
-def plot_kept_stat(folder_list,labels_folder, int_to_labels, labels_to_int):
-
-    amount_trees = {}
-    for filename in folder_list:
-        amount_trees_img, _ = calculate_tree_stats(filename,labels_folder,int_to_labels,labels_to_int)
-        amount_trees = add_values(amount_trees,amount_trees_img)
-    categories = list(amount_trees.keys())
-    values = list(amount_trees.values())
-
-    # Colors available
-    colors = ['blue', 'green', 'orange', 'red']
-
-    # Create a bar plot
-    plt.bar(categories, values, color=colors)
-
-    # Add labels and title
-    plt.xlabel('Categories')
-    plt.ylabel('Values')
-    plt.title('Bar Plot from Dictionary')
-
-    # Show the plot
-    plt.show()
+def make_dict_sum(dict):
+    return sum(dict.values())
 
 
-def keep_H(proportions_per_image):
-    images_to_increase = []
+
+
+def data_kept(proportions_per_image):
+    images_to_rotate = []
     dict_sum = {}
     for image_name, proportions in proportions_per_image.items():
         proportion_H = proportions.get("Larch-H", 0)
@@ -117,95 +98,104 @@ def keep_H(proportions_per_image):
             for label, proportion in proportions.items():
                 print(f"   {label}: {proportion * 100:.2f}%")
             dict_sum = add_values(dict_sum,proportions)
-            images_to_increase.append(image_name)
+            images_to_rotate.append(image_name)
     
-    return images_to_increase
+    return images_to_rotate
 
-def rotate_image(input_path, output_path,rotation):
+def rotate_image(input_file):
     # Open the image file
-    with Image.open(input_path) as img:
+    with Image.open(input_file) as img:
         # Rotate the image 90 degrees clockwise
-        rotated_img = img.rotate(rotation, expand=True)
+        for rotation in ROTATIONS:
+            print(input_file.split(".")[0])
+            rotated_file = input_file.split(".")[0] +f"_{rotation}{IMG_EXT}"
+            rotated_img = img.rotate(rotation, expand=True)
+            rotated_img.save(rotated_file)
 
-        # Save the rotated image to the specified output path
-        rotated_img.save(output_path)
+def rotate_boxes(input_file):
 
-def rotate_boxes(input_boxes_path, output_boxes_path,rotation):
     # Read the box data from the file
-    with open(input_boxes_path, 'r') as box_file:
+    with open(input_file, 'r') as box_file:
         box_lines = box_file.readlines()
 
-    # Rotate and save the rotated bounding boxes
-    with open(output_boxes_path, 'w') as output_box_file:
-        for box_line in box_lines:
-            # Parse box coordinates
-            box_data = box_line.strip().split()
-            box_class = int(box_data[0])
-            x, y, width, height = map(float, box_data[1:])
-            if rotation == 90:
-                rotated_x = y  # Swap x and y
-                rotated_y = 1 - x  # Adjust y
-                rotated_width = height
-                rotated_height = width
-            elif rotation == 180:
-                rotated_x = 1 - x  # Swap x and y
-                rotated_y = 1 - y   # Adjust y
-                rotated_width = width
-                rotated_height = height
-            elif rotation == 270:
-                rotated_x = 1 - y  # Swap x and y
-                rotated_y = x  # Adjust y
-                rotated_width = height
-                rotated_height = width
+    # Rotate and save the rotated bounding boxes for each rotation
+    for rotation in ROTATIONS:
+        rotated_file = input_file.split()[0] + f"_{rotation}{TXT_EXT}"
+        with open(rotated_file, 'w') as output_box_file:
+            for box_line in box_lines:
+                # Parse box coordinates
+                box_data = box_line.strip().split()
+                box_class = int(box_data[0])
+                x, y, width, height = map(float, box_data[1:])
+                # Perform rotation based on the specified angle
+                if rotation == 90:
+                    rotated_x = y
+                    rotated_y = 1 - x
+                    rotated_width = height
+                    rotated_height = width
+                elif rotation == 180:
+                    rotated_x = 1 - x
+                    rotated_y = 1 - y
+                    rotated_width = width
+                    rotated_height = height
+                elif rotation == 270:
+                    rotated_x = 1 - y
+                    rotated_y = x
+                    rotated_width = height
+                    rotated_height = width
 
-            # Save the rotated box data to the output file
-            output_box_file.write(f"{box_class} {rotated_x:.6f} {rotated_y:.6f} {rotated_width:.6f} {rotated_height:.6f}\n")
+                # Save the rotated box data to the output file
+                output_box_file.write(f"{box_class} {rotated_x:.6f} {rotated_y:.6f} {rotated_width:.6f} {rotated_height:.6f}\n")
 
 
-def rotate_data(labels_list,folder_name):
+
+def apply_data_aug(labels_list,data_folder,data_augm_folder):
+    shutil.rmtree(data_augm_folder)
+    shutil.copytree(data_folder,data_augm_folder)
+    folder_name = data_augm_folder + TRAIN_FOLDER
     for labels in labels_list:
         root = labels.split(".")[0]
-        img_type = "images/"
-        label_type = "labels/"
-        label_ext = ".txt"
-        img_ext = ".JPG"
-        rotation_base = 90
-        # Rotate the image three times
-        for i in range(1,4):
-            rotation = i*rotation_base
-            print(i)
-            print(rotation)
-            label_file = folder_name + label_type + root + label_ext
-            image_file = folder_name + img_type + root + img_ext
-            output_label_file= folder_name+ label_type + root + str(rotation) + label_ext
-            output_image_file= folder_name + img_type + root + str(rotation) + img_ext
-            rotate_image(image_file,output_image_file,rotation)
-            rotate_boxes(label_file,output_label_file,rotation)
+        label_file = folder_name + LABEL_FOLDER + root + TXT_EXT
+        image_file = folder_name + IMG_FOLDER + root + IMG_EXT
+        rotate_image(image_file)
+        rotate_boxes(label_file)
+
+def main(data_aug):
+    
+    train_labels_folder = 'Data/train/labels/'
+    data_folder= "Data/"
+    data_augm_folder = "DataAugmentation/"
+    train_labels_augm_folder = "DataAugmentation/train/labels/"
+
+    if data_aug:
+        # First plot to the distribution
+        plot_stat(train_labels_folder,int_to_labels,labels_to_int)
+        sum,train_proportion_per_images = get_proportions_per_image(train_labels_folder, int_to_labels,labels_to_int)
+        total_trees = make_dict_sum(sum)
+        # Show the initial amount of trees
+        print(total_trees)
+
+        augmented_images_train = data_kept(train_proportion_per_images)
+        apply_data_aug(augmented_images_train,data_folder,data_augm_folder)
+        
+        sum,train_proportion_per_images = get_proportions_per_image(train_labels_augm_folder, int_to_labels,labels_to_int)
+        total_trees = make_dict_sum(sum)
+        print(total_trees)
+        plot_stat(train_labels_augm_folder,int_to_labels,labels_to_int)
+
+    else:
+        sum,train_proportion_per_images = get_proportions_per_image(train_labels_folder, int_to_labels,labels_to_int)
+        total_trees = make_dict_sum(sum)
+        print(f"Amount of trees in Data: {total_trees}")
+        print(f"Proportions of trees in Data: {sum}")
+        plot_stat(train_labels_folder,int_to_labels,labels_to_int)
+        sum,train_proportion_per_images = get_proportions_per_image(train_labels_augm_folder, int_to_labels,labels_to_int)
+        total_trees = make_dict_sum(sum)
+        print(f"Amount of trees in DataAugmentation: {total_trees}")
+        print(f"Proportions of trees in Data: {sum}")
+        plot_stat(train_labels_augm_folder,int_to_labels,labels_to_int)
+
+if __name__ == "__main__":
+    main(data_aug=False)
 
 
-
-
-train_labels_folder = 'Data/train/labels/'
-val_labels_folder = 'Data/valid/labels/'
-filename = "B01_0004.txt"
-
-trees_amount,proportions = calculate_tree_stats(filename,train_labels_folder, int_to_labels,labels_to_int)
-
-# print(trees_amount)
-# print(proportions)
-
-plot_stat(train_labels_folder,int_to_labels,labels_to_int)
-sum,train_proportion_per_images = get_proportions_per_image(train_labels_folder, int_to_labels,labels_to_int)
-# proportions_par_image_valid = get_proportions_per_image(val_labels_folder, int_to_labels)
-print(train_proportion_per_images)
-
-augmented_images_train = keep_H(train_proportion_per_images)
-
-
-plot_kept_stat(augmented_images_train,train_labels_folder,int_to_labels,labels_to_int)
-plot_stat(train_labels_folder,int_to_labels,labels_to_int)
-
-
-folder_name = "Data/train/"
-rotate_data(augmented_images_train,folder_name)
-plot_stat(train_labels_folder,int_to_labels,labels_to_int)
