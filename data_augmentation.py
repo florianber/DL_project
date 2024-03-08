@@ -120,7 +120,7 @@ def rotate_boxes(input_file):
 
     # Rotate and save the rotated bounding boxes for each rotation
     for rotation in ROTATIONS:
-        rotated_file = input_file.split()[0] + f"_{rotation}{TXT_EXT}"
+        rotated_file = input_file.split(".")[0] + f"_{rotation}{TXT_EXT}"
         with open(rotated_file, 'w') as output_box_file:
             for box_line in box_lines:
                 # Parse box coordinates
@@ -147,6 +147,56 @@ def rotate_boxes(input_file):
                 # Save the rotated box data to the output file
                 output_box_file.write(f"{box_class} {rotated_x:.6f} {rotated_y:.6f} {rotated_width:.6f} {rotated_height:.6f}\n")
 
+def mirror_image(input_file):
+    # Open the image file
+    for mirror in MIRROR:
+        with Image.open(input_file) as img:
+            # Apply mirror transformation
+            if mirror == "x":
+                mirrored_file = input_file.split(".")[0] + "_mirrored_"+mirror + IMG_EXT
+                mirrored_img = img.transpose(method=Image.FLIP_LEFT_RIGHT)
+                mirrored_img.save(mirrored_file)
+            elif mirror == "y":
+                mirrored_file = input_file.split(".")[0] + "_mirrored_"+mirror + IMG_EXT
+                mirrored_img = img.transpose(method=Image.FLIP_TOP_BOTTOM)
+                mirrored_img.save(mirrored_file)
+
+def mirror_boxes(input_file):
+    # Read the box data from the file
+    with open(input_file, 'r') as box_file:
+        box_lines = box_file.readlines()
+
+    # Apply mirror transformation to the bounding boxes
+    for mirror in MIRROR:
+        print(input_file.split("."))
+        mirrored_file = input_file.split(".")[0] + "_mirrored_"+mirror + TXT_EXT
+
+        with open(mirrored_file, 'w') as output_box_file:
+            for box_line in box_lines:
+                # Parse box coordinates
+                box_data = box_line.strip().split()
+                box_class = int(box_data[0])
+                x, y, width, height = map(float, box_data[1:])
+                
+                if mirror == "x":
+                # Apply mirror transformation to the box coordinates
+                    mirrored_x = 1 - x
+                    mirrored_y = y
+                    mirrored_width = width
+                    mirrored_height = height
+                elif mirror == "y":
+                # Apply mirror transformation to the box coordinates
+                    mirrored_x = x
+                    mirrored_y = 1 - y
+                    mirrored_width = width
+                    mirrored_height = height
+
+                # Save the mirrored box data to the output file
+                output_box_file.write(f"{box_class} {mirrored_x:.6f} {mirrored_y:.6f} {mirrored_width:.6f} {mirrored_height:.6f}\n")
+
+
+
+
 
 
 def apply_data_aug(labels_list,data_folder,data_augm_folder):
@@ -159,6 +209,8 @@ def apply_data_aug(labels_list,data_folder,data_augm_folder):
         image_file = folder_name + IMG_FOLDER + root + IMG_EXT
         rotate_image(image_file)
         rotate_boxes(label_file)
+        mirror_image(image_file)
+        mirror_boxes(label_file)
 
 def main(data_aug):
     
@@ -196,6 +248,6 @@ def main(data_aug):
         plot_stat(train_labels_augm_folder,int_to_labels,labels_to_int)
 
 if __name__ == "__main__":
-    main(data_aug=False)
+    main(data_aug=True)
 
 

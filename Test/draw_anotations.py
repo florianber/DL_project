@@ -75,9 +75,9 @@ def annotate_image_from_text(annotation_file, image_file, image_annotated_file,i
     cv2.imwrite(image_annotated_file, image)
 
 
-folder_name = "Data/train/"
-image_file = folder_name + "images/B02_0051270.JPG"
-label_file = folder_name + "labels/B02_0051270.txt"
-image_annotated_file = "Test/B02_0051270_annoatated.JPG"
+folder_name = "DataAugmentation/train/"
+image_file = folder_name + "images/B02_0051_mirrored_x.JPG"
+label_file = folder_name + "labels/B02_0051_mirrored_x.txt"
+image_annotated_file = "Test/B02_0051_mirrored_x_annoatated.JPG"
 
 annotate_image_from_text(label_file,image_file,image_annotated_file,int_to_labels)
