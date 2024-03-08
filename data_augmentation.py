@@ -102,12 +102,13 @@ def data_kept(proportions_per_image):
     
     return images_to_rotate
 
+
+
 def rotate_image(input_file):
     # Open the image file
     with Image.open(input_file) as img:
         # Rotate the image 90 degrees clockwise
         for rotation in ROTATIONS:
-            print(input_file.split(".")[0])
             rotated_file = input_file.split(".")[0] +f"_{rotation}{IMG_EXT}"
             rotated_img = img.rotate(rotation, expand=True)
             rotated_img.save(rotated_file)
@@ -168,7 +169,6 @@ def mirror_boxes(input_file):
 
     # Apply mirror transformation to the bounding boxes
     for mirror in MIRROR:
-        print(input_file.split("."))
         mirrored_file = input_file.split(".")[0] + "_mirrored_"+mirror + TXT_EXT
 
         with open(mirrored_file, 'w') as output_box_file:
@@ -195,10 +195,6 @@ def mirror_boxes(input_file):
                 output_box_file.write(f"{box_class} {mirrored_x:.6f} {mirrored_y:.6f} {mirrored_width:.6f} {mirrored_height:.6f}\n")
 
 
-
-
-
-
 def apply_data_aug(labels_list,data_folder,data_augm_folder):
     shutil.rmtree(data_augm_folder)
     shutil.copytree(data_folder,data_augm_folder)
@@ -211,6 +207,44 @@ def apply_data_aug(labels_list,data_folder,data_augm_folder):
         rotate_boxes(label_file)
         mirror_image(image_file)
         mirror_boxes(label_file)
+
+
+def data_removed(proportions_per_image):
+    images_to_remove = []
+    dict_sum = {}
+    for image_name, proportions in proportions_per_image.items():
+        proportion_H = proportions.get("Larch-H", 0)
+        proportion_LD = proportions.get("Larch-LD", 0)
+        proportion_HD = proportions.get("Larch-HD", 0)
+        proportion_O = proportions.get("Other", 0)
+   
+        # Add the image name to the list if the proportion of H or HD is greater than 30%
+        if proportion_LD > proportion_H and proportion_LD>proportion_HD and proportion_LD>proportion_O:
+            print(f"{image_name}:")
+            for label, proportion in proportions.items():
+                print(f"   {label}: {proportion * 100:.2f}%")
+            dict_sum = add_values(dict_sum,proportions)
+            images_to_remove.append(image_name)
+    return images_to_remove
+
+def remove_file(file_path):
+    try:
+        os.remove(file_path)
+        # print(f"File '{file_path}' removed successfully.")
+    except FileNotFoundError:
+        print(f"File '{file_path}' not found.")
+    except Exception as e:
+        print(f"Error removing file '{file_path}': {e}")
+
+def remove_img_labels(labels_list,data_augm_folder):
+    folder_name = data_augm_folder + TRAIN_FOLDER
+    for labels in labels_list:
+        root = labels.split(".")[0]
+        label_file = folder_name + LABEL_FOLDER + root + TXT_EXT
+        image_file = folder_name + IMG_FOLDER + root + IMG_EXT
+        remove_file(label_file)
+        remove_file(image_file)
+
 
 def main(data_aug):
     
@@ -228,7 +262,10 @@ def main(data_aug):
         print(total_trees)
 
         augmented_images_train = data_kept(train_proportion_per_images)
+        removed_images_train = data_removed(train_proportion_per_images)
+        print(len(removed_images_train))
         apply_data_aug(augmented_images_train,data_folder,data_augm_folder)
+        remove_img_labels(removed_images_train,data_augm_folder)
         
         sum,train_proportion_per_images = get_proportions_per_image(train_labels_augm_folder, int_to_labels,labels_to_int)
         total_trees = make_dict_sum(sum)
@@ -248,6 +285,6 @@ def main(data_aug):
         plot_stat(train_labels_augm_folder,int_to_labels,labels_to_int)
 
 if __name__ == "__main__":
-    main(data_aug=True)
+    main(data_aug=False)
 
 
