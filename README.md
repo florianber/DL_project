@@ -72,6 +72,7 @@ Before to train you need to import the yolov5 repository. You need to be in your
 **`git clone git@github.com:ultralytics/yolov5.git`**
 
 From here you can try to train the model. I provide here an example of command to pass through the terminal but you can change every parameter you want following the ones in the `train.py` file of the yolov5 repo. Also you need to be in your repo in the yolov5 repo to execute the following command:
+
 `python train.py --data ../data.yaml --weights yolov5n.pt --img 640 --epochs 10 --batch-size 16`
 
 You can change the batch size to 8 if you are struggling running the training. You can also increase or decrease the amount of epochs.
