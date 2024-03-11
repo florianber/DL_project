@@ -37,15 +37,17 @@ class Colors:
         Colors derived from `hex = matplotlib.colors.TABLEAU_COLORS.values()`.
         """
         hexs = (
-            "FF3838",
-            "FF9D97",
-            "FF701F",
-            "FFB21D",
+            "CB38FF", #violet
+            "1A9334", #vert foncé
+            "FFB21D", #jaune
+            "FF3838", #rouge
+            "FF701F", #orange
+            "FF9D97", # rose
             "CFD231",
             "48F90A",
-            "92CC17",
-            "3DDB86",
-            "1A9334",
+            "92CC17", #vert
+            "3DDB86", #vert mieux
+            "1A9334", #vert foncé
             "00D4BB",
             "2C99A8",
             "00C2FF",
@@ -54,10 +56,11 @@ class Colors:
             "0018EC",
             "8438FF",
             "520085",
-            "CB38FF",
+            "CB38FF", #violet
             "FF95C8",
             "FF37C7",
         )
+
         self.palette = [self.hex2rgb(f"#{c}") for c in hexs]
         self.n = len(self.palette)
 
