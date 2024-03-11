@@ -41,7 +41,7 @@ class Colors:
             "CB38FF", #violet
             "1A9334", #vert foncé
             "FFB21D", #jaune
-            "FF3838", #rouge
+            "FD0203", #rouge
             "FF701F", #orange
             "FF9D97", # rose
             "CFD231",
