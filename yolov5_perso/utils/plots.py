@@ -16,6 +16,7 @@ import seaborn as sn
 import torch
 from PIL import Image, ImageDraw
 from scipy.ndimage.filters import gaussian_filter1d
+from ultralytics import utils
 from ultralytics.utils.plotting import Annotator
 
 from utils import TryExcept, threaded
@@ -181,10 +182,10 @@ def plot_images(images, targets, paths=None, fname="images.jpg", names=None):
 
     # Annotate
     fs = int((h + w) * ns * 0.01)  # font size
-    annotator = Annotator(mosaic, line_width=round(fs / 10), font_size=fs, pil=True, example=names)
+    annotator = Annotator(mosaic, line_width=2, font_size=fs, pil=True, example=names)
     for i in range(i + 1):
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin
-        annotator.rectangle([x, y, x + w, y + h], None, (255, 255, 255), width=2)  # borders
+        annotator.rectangle([x, y, x + w, y + h], None, (255, 255, 255), width=1)  # borders
         if paths:
             annotator.text([x + 5, y + 5], text=Path(paths[i]).name[:40], txt_color=(220, 220, 220))  # filenames
         if len(targets) > 0:
