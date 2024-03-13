@@ -1,2 +1,4 @@
 Larch_Dataset/*
-
+runs/train/aug_x_640_16_150_adam/weights
+runs/train/aug_x_640_16_150_adamw/weights
+runs/train/aug_x_640_16_150_sgd/weights
